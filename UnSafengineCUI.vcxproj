@@ -148,8 +148,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY $(SolutionDir)$(Platform)\$(Configuration)\UnSafengine.exe C:\pintool\
-        COPY $(SolutionDir)\UnSafengine.cfg C:\pintool\
+      <Command>if not exist "$(SolutionDir)pintool" mkdir "$(SolutionDir)pintool"
+        COPY "$(TargetPath)" "$(SolutionDir)pintool\"
+        COPY "$(SolutionDir)UnSafengine.cfg" "$(SolutionDir)pintool\"
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -79,6 +79,11 @@
     <PinRoot Condition="'$(PinRoot)'==''">$(MSBuildThisFileDirectory)pin</PinRoot>
   </PropertyGroup>
   <PropertyGroup>
+    <PintoolOutDir Condition="'$(PintoolOutDir)'=='' and '$(SolutionDir)'!=''">
+      $(SolutionDir)pintool\</PintoolOutDir>
+    <PintoolOutDir Condition="'$(PintoolOutDir)'==''">$(MSBuildProjectDirectory)\pintool\</PintoolOutDir>
+  </PropertyGroup>
+  <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       $(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
@@ -328,6 +333,14 @@
   <ItemGroup>
     <ResourceCompile Include="UnSafengine.rc" />
   </ItemGroup>
+
+  <Target Name="CopyOutputsToPintool" AfterTargets="Build" Condition="'$(PintoolOutDir)' != ''">
+    <MakeDir Directories="$(PintoolOutDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PintoolOutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\UnSafengine.cfg"
+      DestinationFolder="$(PintoolOutDir)" SkipUnchangedFiles="true"
+      Condition="Exists('$(MSBuildProjectDirectory)\UnSafengine.cfg')" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
