@@ -10,6 +10,7 @@ using namespace std;
 string PIN_DIR = "";
 string PINTOOL_DIR = "";
 string PINEXE;
+string PINTOOL32;
 string PINTOOL64;
 string CONFIG = "UnSafengine.cfg";
 
@@ -110,7 +111,8 @@ static void set_defaults_from_workspace(const string& workspaceRoot, pe_arch arc
 	}
 
 	PINEXE = pinExeCandidate;
-	PINTOOL64 = join_path(pintoolRoot, "UnSafengine.dll");
+	PINTOOL32 = join_path(pintoolRoot, "UnSafenginex86.dll");
+	PINTOOL64 = join_path(pintoolRoot, "UnSafenginex64.dll");
 }
 
 int read_config_file(string config_file, pe_arch arch) {
@@ -170,14 +172,18 @@ int read_config_file(string config_file, pe_arch arch) {
 		}
 	}
 	if (!PINTOOL_DIR.empty()) {
-		const string pintoolDll = join_path(PINTOOL_DIR, "UnSafengine.dll");
-		if (file_exists(pintoolDll)) {
-			PINTOOL64 = pintoolDll;
+		const string pintoolDll32 = join_path(PINTOOL_DIR, "UnSafengine32.dll");
+		const string pintoolDll64 = join_path(PINTOOL_DIR, "UnSafengine64.dll");
+		if (file_exists(pintoolDll32)) {
+			PINTOOL32 = pintoolDll32;
+		}
+		if (file_exists(pintoolDll64)) {
+			PINTOOL64 = pintoolDll64;
 		}
 	}
 
 	// Fallback to repo defaults if config points to non-existent locations.
-	if (PINEXE.empty() || PINTOOL64.empty()) {
+	if (PINEXE.empty() || PINTOOL32.empty() || PINTOOL64.empty()) {
 		set_defaults_from_workspace(workspaceRoot, arch);
 	}
 
@@ -216,7 +222,10 @@ int main(int argc, char** argv)
 	pe_arch arch = get_pe_arch(exe_file_name);
 	read_config_file(CONFIG, arch);
 
-	cmd_line = quote_arg(PINEXE) + " -ifeellucky -t " + quote_arg(PINTOOL64);
+	// Select the correct pintool version based on target architecture
+	string pintool = (arch == pe_arch::x64) ? PINTOOL64 : PINTOOL32;
+
+	cmd_line = quote_arg(PINEXE) + " -ifeellucky -t " + quote_arg(pintool);
 	option = string(argv[1]);
 	if (option == "-deob") {
 		cmd_line += " -dump";

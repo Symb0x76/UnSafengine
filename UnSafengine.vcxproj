@@ -336,7 +336,14 @@
 
   <Target Name="CopyOutputsToPintool" AfterTargets="Build" Condition="'$(PintoolOutDir)' != ''">
     <MakeDir Directories="$(PintoolOutDir)" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PintoolOutDir)" SkipUnchangedFiles="true" />
+    <!-- Rename DLL based on platform: UnSafengine32.dll for Win32, UnSafengine64.dll for x64 -->
+    <PropertyGroup>
+      <PintoolDllName Condition="'$(Platform)'=='Win32'">UnSafengine32.dll</PintoolDllName>
+      <PintoolDllName Condition="'$(Platform)'=='x64'">UnSafengine64.dll</PintoolDllName>
+    </PropertyGroup>
+    <Copy SourceFiles="$(TargetPath)" 
+      DestinationFiles="$(PintoolOutDir)$(PintoolDllName)"
+      SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(MSBuildProjectDirectory)\UnSafengine.cfg"
       DestinationFolder="$(PintoolOutDir)" SkipUnchangedFiles="true"
       Condition="Exists('$(MSBuildProjectDirectory)\UnSafengine.cfg')" />
