@@ -76,7 +76,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <PinRoot Condition="'$(PinRoot)'==''">$(SolutionDir)..\pin</PinRoot>
+    <PinRoot Condition="'$(PinRoot)'==''">$(MSBuildThisFileDirectory)pin</PinRoot>
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
@@ -114,6 +114,9 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+
+    <OutDir>$([System.String]::Copy('$(OutDir)').Trim())</OutDir>
+    <IntDir>$([System.String]::Copy('$(IntDir)').Trim())</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -125,8 +128,8 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
         $(PinRoot)\intel64\lib;$(PinRoot)\source\include\pin;$(PinRoot)\source\include\pin\gen;$(PinRoot)\source\tools\InstLib;$(PinRoot)\extras\xed-intel64\include\xed;$(PinRoot)\extras\components\include;$(PinRoot)\extras\stlport\include;$(PinRoot)\extras;$(PinRoot)\extras\libstdc++\include;$(PinRoot)\extras\crt\include;$(PinRoot)\extras\crt;$(PinRoot)\extras\crt\include\arch-x86_64;$(PinRoot)\extras\crt\include\kernel\uapi;$(PinRoot)\extras\crt\include\kernel\uapi\asm-x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TARGET_IA32E;HOST_IA32E;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;__LP64__;_WINDOWS_H_PATH_=C:/Program
-        Files (x86)/Windows Kits/10/Include/$(WindowsTargetPlatformVersion)/um</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+        TARGET_IA32E;HOST_IA32E;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;__LP64__;_WINDOWS_H_PATH_=C:/PROGRA~2/WI3CF2~1/10/Include/$(WindowsTargetPlatformVersion)/um;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>
@@ -172,9 +175,8 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
         $(PinRoot)\ia32\lib;$(PinRoot)\source\include\pin;$(PinRoot)\source\include\pin\gen;$(PinRoot)\source\tools\InstLib;$(PinRoot)\extras\xed-ia32\include\xed;$(PinRoot)\extras\components\include;$(PinRoot)\extras\stlport\include;$(PinRoot)\extras;$(PinRoot)\extras\libstdc++\include;$(PinRoot)\extras\crt\include;$(PinRoot)\extras\crt;$(PinRoot)\extras\crt\include\arch-x86;$(PinRoot)\extras\crt\include\kernel\uapi;$(PinRoot)\extras\crt\include\kernel\uapi\asm-x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TARGET_IA32;HOST_IA32;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;_WINDOWS_H_PATH_=C:/Program
-        Files (x86)/Windows
-        Kits/10/Include/$(WindowsTargetPlatformVersion)/um;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+        TARGET_IA32;HOST_IA32;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;_WINDOWS_H_PATH_=C:/PROGRA~2/WI3CF2~1/10/Include/$(WindowsTargetPlatformVersion)/um;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>
@@ -223,8 +225,8 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>
         $(PinRoot)\source\include\pin;$(PinRoot)\source\include\pin\gen;$(PinRoot)\extras\xed-intel64\include\xed;$(PinRoot)\extras\components\include;$(PinRoot)\extras\stlport\include;$(PinRoot)\extras;$(PinRoot)\extras\libstdc++\include;$(PinRoot)\extras\crt\include;$(PinRoot)\extras\crt;$(PinRoot)\extras\crt\include\arch-x86_64;$(PinRoot)\extras\crt\include\kernel\uapi;$(PinRoot)\extras\crt\include\kernel\uapi\asm-x86</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TARGET_IA32E;HOST_IA32E;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;__LP64__;_WINDOWS_H_PATH_=C:/Program
-        Files (x86)/Windows Kits/10/Include/$(WindowsTargetPlatformVersion)/um</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+        TARGET_IA32E;HOST_IA32E;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;__LP64__;_WINDOWS_H_PATH_=C:/PROGRA~2/WI3CF2~1/10/Include/$(WindowsTargetPlatformVersion)/um;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -272,9 +274,8 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>
         $(PinRoot)\source\include\pin;$(PinRoot)\source\include\pin\gen;$(PinRoot)\extras\xed-ia32\include\xed;$(PinRoot)\extras\components\include;$(PinRoot)\extras\stlport\include;$(PinRoot)\extras;$(PinRoot)\extras\libstdc++\include;$(PinRoot)\extras\crt\include;$(PinRoot)\extras\crt;$(PinRoot)\extras\crt\include\arch-x86;$(PinRoot)\extras\crt\include\kernel\uapi;$(PinRoot)\extras\crt\include\kernel\uapi\asm-x86</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TARGET_IA32;HOST_IA32;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;_WINDOWS_H_PATH_=C:/Program
-        Files (x86)/Windows
-        Kits/10/Include/$(WindowsTargetPlatformVersion)/um;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+        TARGET_IA32;HOST_IA32;TARGET_WINDOWS;__PIN__=1;PIN_CRT=1;_WINDOWS_H_PATH_=C:/PROGRA~2/WI3CF2~1/10/Include/$(WindowsTargetPlatformVersion)/um;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
