@@ -216,7 +216,7 @@ int main(int argc, char** argv)
 	pe_arch arch = get_pe_arch(exe_file_name);
 	read_config_file(CONFIG, arch);
 
-	cmd_line = quote_arg(PINEXE) + " -t " + quote_arg(PINTOOL64);
+	cmd_line = quote_arg(PINEXE) + " -ifeellucky -t " + quote_arg(PINTOOL64);
 	option = string(argv[1]);
 	if (option == "-deob") {
 		cmd_line += " -dump";
