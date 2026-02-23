@@ -366,6 +366,7 @@ FodyWeavers.xsd
 
 # pin tool
 pin/
+pintool/
 
 # VS Code
 .vscode/
