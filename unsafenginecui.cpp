@@ -8,8 +8,13 @@
 using namespace std;
 
 string PIN_DIR = "";
+string PIN_IA32_DIR = "";
+string PIN_INTEL64_DIR = "";
 string PINTOOL_DIR = "";
 string PINEXE;
+string PINLAUNCHER;
+string PINBIN32;
+string PINBIN64;
 string PINTOOL32;
 string PINTOOL64;
 string CONFIG = "UnSafengine.cfg";
@@ -41,11 +46,59 @@ static string join_path(const string& a, const string& b) {
 	return a + "\\" + b;
 }
 
+static string parent_dir(string path) {
+	while (!path.empty() && (path.back() == '\\' || path.back() == '/')) {
+		path.pop_back();
+	}
+	size_t pos = path.find_last_of("\\/");
+	if (pos == string::npos) return "";
+	return path.substr(0, pos);
+}
+
 static string quote_arg(const string& s) {
 	if (s.find(' ') != string::npos || s.find('\t') != string::npos) {
 		return string("\"") + s + "\"";
 	}
 	return s;
+}
+
+static string resolve_pin_exe_from_base(const string& baseDir, pe_arch arch) {
+	if (baseDir.empty()) return "";
+
+	// Accept either a directory that directly contains pin.exe,
+	// or a Pin root directory that contains ia32/intel64 subfolders.
+	const string direct = join_path(baseDir, "pin.exe");
+	if (file_exists(direct)) return direct;
+
+	if (arch == pe_arch::x64) {
+		const string fromRoot = join_path(join_path(join_path(baseDir, "intel64"), "bin"), "pin.exe");
+		if (file_exists(fromRoot)) return fromRoot;
+	} else {
+		const string fromRoot = join_path(join_path(join_path(baseDir, "ia32"), "bin"), "pin.exe");
+		if (file_exists(fromRoot)) return fromRoot;
+	}
+
+	return "";
+}
+
+static string resolve_pin_kit_root_from_base(const string& baseDir) {
+	if (baseDir.empty()) return "";
+	string d = baseDir;
+	for (int i = 0; i < 4; i++) {
+		if (file_exists(join_path(d, "pin.exe")) && dir_exists(join_path(d, "ia32")) && dir_exists(join_path(d, "intel64"))) {
+			return d;
+		}
+		d = parent_dir(d);
+		if (d.empty()) break;
+	}
+	return "";
+}
+
+static void set_pin_paths_from_kit_root(const string& kitRoot, pe_arch arch) {
+	PINLAUNCHER = join_path(kitRoot, "pin.exe");
+	PINBIN32 = join_path(join_path(join_path(kitRoot, "ia32"), "bin"), "pin.exe");
+	PINBIN64 = join_path(join_path(join_path(kitRoot, "intel64"), "bin"), "pin.exe");
+	PINEXE = resolve_pin_exe_from_base(kitRoot, arch);
 }
 
 enum class pe_arch { unknown, x86, x64 };
@@ -100,19 +153,19 @@ string get_working_path() {
 }
 
 static void set_defaults_from_workspace(const string& workspaceRoot, pe_arch arch) {
-	const string pinRoot = join_path(workspaceRoot, "pin");
+	// Prefer newer Pin bundles if present in the workspace root.
+	string pinRoot = join_path(workspaceRoot, "pin331");
+	if (!dir_exists(pinRoot)) {
+		pinRoot = join_path(workspaceRoot, "pin318");
+	}
+	if (!dir_exists(pinRoot)) {
+		pinRoot = join_path(workspaceRoot, "pin");
+	}
 	const string pintoolRoot = join_path(workspaceRoot, "pintool");
 
-	string pinExeCandidate;
-	if (arch == pe_arch::x64) {
-		pinExeCandidate = join_path(join_path(join_path(pinRoot, "intel64"), "bin"), "pin.exe");
-	} else {
-		pinExeCandidate = join_path(join_path(join_path(pinRoot, "ia32"), "bin"), "pin.exe");
-	}
-
-	PINEXE = pinExeCandidate;
-	PINTOOL32 = join_path(pintoolRoot, "UnSafenginex86.dll");
-	PINTOOL64 = join_path(pintoolRoot, "UnSafenginex64.dll");
+	set_pin_paths_from_kit_root(pinRoot, arch);
+	PINTOOL32 = join_path(pintoolRoot, "UnSafengine32.dll");
+	PINTOOL64 = join_path(pintoolRoot, "UnSafengine64.dll");
 }
 
 int read_config_file(string config_file, pe_arch arch) {
@@ -156,6 +209,16 @@ int read_config_file(string config_file, pe_arch arch) {
 			if (pos != string::npos) {
 				PIN_DIR = trim_copy(line.substr(pos + 1));
 			}
+		} else if (line.rfind("PIN_IA32_DIR", 0) == 0) {
+			size_t pos = line.find('=');
+			if (pos != string::npos) {
+				PIN_IA32_DIR = trim_copy(line.substr(pos + 1));
+			}
+		} else if (line.rfind("PIN_INTEL64_DIR", 0) == 0) {
+			size_t pos = line.find('=');
+			if (pos != string::npos) {
+				PIN_INTEL64_DIR = trim_copy(line.substr(pos + 1));
+			}
 		} else if (line.rfind("PINTOOL_DIR", 0) == 0) {
 			size_t pos = line.find('=');
 			if (pos != string::npos) {
@@ -165,10 +228,24 @@ int read_config_file(string config_file, pe_arch arch) {
 	}
 
 	// Build candidates from config, but only accept them if the files exist.
-	if (!PIN_DIR.empty()) {
-		const string pinExe = join_path(PIN_DIR, "pin.exe");
-		if (file_exists(pinExe)) {
-			PINEXE = pinExe;
+	{
+		string pinDirArch = (arch == pe_arch::x64) ? PIN_INTEL64_DIR : PIN_IA32_DIR;
+		if (!pinDirArch.empty()) {
+			const string kitRoot = resolve_pin_kit_root_from_base(pinDirArch);
+			if (!kitRoot.empty()) {
+				set_pin_paths_from_kit_root(kitRoot, arch);
+			} else {
+				PINEXE = resolve_pin_exe_from_base(pinDirArch, arch);
+			}
+		}
+		// Backward-compatible fallback.
+		if (PINEXE.empty() && !PIN_DIR.empty()) {
+			const string kitRoot = resolve_pin_kit_root_from_base(PIN_DIR);
+			if (!kitRoot.empty()) {
+				set_pin_paths_from_kit_root(kitRoot, arch);
+			} else {
+				PINEXE = resolve_pin_exe_from_base(PIN_DIR, arch);
+			}
 		}
 	}
 	if (!PINTOOL_DIR.empty()) {
@@ -224,8 +301,31 @@ int main(int argc, char** argv)
 
 	// Select the correct pintool version based on target architecture
 	string pintool = (arch == pe_arch::x64) ? PINTOOL64 : PINTOOL32;
+	cout << "[pin] " << PINEXE << endl;
+	cout << "[tool] " << pintool << endl;
 
-	cmd_line = quote_arg(PINEXE) + " -ifeellucky -t " + quote_arg(pintool);
+	const bool canMixedMode =
+		arch == pe_arch::x86 &&
+		!PINLAUNCHER.empty() && file_exists(PINLAUNCHER) &&
+		!PINBIN32.empty() && file_exists(PINBIN32) &&
+		!PINBIN64.empty() && file_exists(PINBIN64) &&
+		!PINTOOL32.empty() && file_exists(PINTOOL32) &&
+		!PINTOOL64.empty() && file_exists(PINTOOL64);
+
+	if (canMixedMode) {
+		cout << "[mode] mixed" << endl;
+		// Mixed-mode launcher invocation (see Pin docs: -p32/-p64 and -t64/-t).
+		cmd_line = quote_arg(PINLAUNCHER)
+			+ " -ifeellucky"
+			+ " -p32 " + quote_arg(PINBIN32)
+			+ " -p64 " + quote_arg(PINBIN64)
+			+ " -t64 " + quote_arg(PINTOOL64)
+			+ " -t " + quote_arg(PINTOOL32);
+	} else {
+		cout << "[mode] single" << endl;
+		cmd_line = quote_arg(PINEXE) + " -ifeellucky -t " + quote_arg(pintool);
+	}
+
 	option = string(argv[1]);
 	if (option == "-deob") {
 		cmd_line += " -dump";
@@ -253,6 +353,14 @@ int main(int argc, char** argv)
 
 	cmd_line += " -- " + quote_arg(exe_file_name);
 	cout << cmd_line << endl;
+	{
+		ofstream out("last_pin_cmd.txt", ios::trunc);
+		if (out) {
+			out << "PINEXE=" << PINEXE << "\n";
+			out << "PINTOOL=" << pintool << "\n";
+			out << "CMD=" << cmd_line << "\n";
+		}
+	}
 	system(cmd_line.c_str());
 	string out_file = exe_file_name.substr(0, exe_file_name.length() - 4) + "_dmp.exe";
 	if (check_output_file(out_file)) {
